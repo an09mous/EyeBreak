@@ -40,6 +40,33 @@ fi
 # Build with Swift Package Manager
 swift build $SWIFT_BUILD_FLAGS
 
+# Generate app icon from source PNG if needed
+ICON_SOURCE="Sources/Eyebreak/Resources/AppIcon.png"
+ICON_ICNS="Sources/Eyebreak/Resources/AppIcon.icns"
+if [ "$ICON_SOURCE" -nt "$ICON_ICNS" ] || [ ! -f "$ICON_ICNS" ]; then
+    echo "Generating app icon..."
+    ICONSET_DIR="AppIcon.iconset"
+    mkdir -p "$ICONSET_DIR"
+
+    # Generate all required sizes using sips
+    for size in 16 32 64 128 256 512 1024; do
+        sips -z $size $size "$ICON_SOURCE" --out "$ICONSET_DIR/icon_${size}x${size}.png" > /dev/null 2>&1
+    done
+
+    # Rename to match macOS iconset naming convention
+    mv "$ICONSET_DIR/icon_16x16.png" "$ICONSET_DIR/icon_16x16.png"
+    cp "$ICONSET_DIR/icon_32x32.png" "$ICONSET_DIR/icon_16x16@2x.png"
+    mv "$ICONSET_DIR/icon_64x64.png" "$ICONSET_DIR/icon_32x32@2x.png"
+    cp "$ICONSET_DIR/icon_256x256.png" "$ICONSET_DIR/icon_128x128@2x.png"
+    cp "$ICONSET_DIR/icon_512x512.png" "$ICONSET_DIR/icon_256x256@2x.png"
+    mv "$ICONSET_DIR/icon_1024x1024.png" "$ICONSET_DIR/icon_512x512@2x.png"
+
+    # Convert to icns
+    iconutil -c icns "$ICONSET_DIR" -o "$ICON_ICNS"
+    rm -rf "$ICONSET_DIR"
+    echo "App icon generated."
+fi
+
 # Create app bundle structure
 mkdir -p Eyebreak.app/Contents/MacOS
 mkdir -p Eyebreak.app/Contents/Resources
@@ -51,6 +78,7 @@ chmod +x Eyebreak.app/Contents/MacOS/Eyebreak
 # Copy resources
 cp Sources/Eyebreak/Resources/quotes.json Eyebreak.app/Contents/Resources/
 cp Sources/Eyebreak/Resources/config.json Eyebreak.app/Contents/Resources/
+cp Sources/Eyebreak/Resources/AppIcon.icns Eyebreak.app/Contents/Resources/
 cp -r .build/$BUILD_CONFIG/Eyebreak_Eyebreak.bundle Eyebreak.app/Contents/Resources/
 
 # Create Info.plist
@@ -83,6 +111,8 @@ cat > Eyebreak.app/Contents/Info.plist << 'EOF'
     <string>NSApplication</string>
     <key>NSHumanReadableCopyright</key>
     <string>Copyright © 2024. All rights reserved.</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
 </dict>
 </plist>
 EOF
