@@ -23,7 +23,7 @@ A macOS menu bar app that helps you follow the **20-20-20 rule** to prevent digi
 
 ### From DMG (Recommended)
 
-1. Download the latest `Eyebreak-1.0.dmg` from releases
+1. Download the latest `Eyebreak-1.0.dmg` from releases (or `build/Eyebreak-1.0.dmg` if building locally)
 2. Open the DMG and drag Eyebreak to your Applications folder
 3. Launch Eyebreak from Applications
 

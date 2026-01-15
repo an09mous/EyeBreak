@@ -93,12 +93,16 @@ echo "App bundle created: Eyebreak.app"
 if [ "$BUILD_DMG" = true ]; then
     echo "Creating DMG..."
 
+    BUILD_DIR="build"
     DMG_NAME="Eyebreak-1.0.dmg"
     DMG_TEMP="dmg_temp"
 
+    # Create build directory
+    mkdir -p "$BUILD_DIR"
+
     # Clean up any previous DMG artifacts
     rm -rf "$DMG_TEMP"
-    rm -f "$DMG_NAME"
+    rm -f "$BUILD_DIR/$DMG_NAME"
 
     # Create temporary directory for DMG contents
     mkdir -p "$DMG_TEMP"
@@ -113,17 +117,17 @@ if [ "$BUILD_DMG" = true ]; then
     hdiutil create -volname "Eyebreak" \
         -srcfolder "$DMG_TEMP" \
         -ov -format UDZO \
-        "$DMG_NAME"
+        "$BUILD_DIR/$DMG_NAME"
 
     # Clean up
     rm -rf "$DMG_TEMP"
 
-    echo "DMG created: $DMG_NAME"
+    echo "DMG created: $BUILD_DIR/$DMG_NAME"
 fi
 
 echo ""
 echo "Build complete!"
 echo "  Run app:    open Eyebreak.app"
 if [ "$BUILD_DMG" = true ]; then
-    echo "  Distribute: $DMG_NAME"
+    echo "  Distribute: $BUILD_DIR/$DMG_NAME"
 fi
