@@ -117,7 +117,7 @@ class TimerManager: ObservableObject {
 
         timeRemaining -= 1
 
-        // Show warning 30 seconds before break
+        // Show warning when time remaining is at or below warning threshold
         if timeRemaining <= warningTime && !hasShownWarning {
             hasShownWarning = true
             isInWarningPeriod = true

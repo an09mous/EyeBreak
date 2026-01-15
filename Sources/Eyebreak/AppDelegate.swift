@@ -41,8 +41,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Configure timer manager callbacks
         timerManager.onWarning = { [weak self] in
             guard let self = self else { return }
-            let seconds = Int(self.timerManager.timeRemaining)
-            self.warningWindowController.showWarning(secondsRemaining: seconds)
+            self.warningWindowController.showWarning(timerManager: self.timerManager)
         }
 
         timerManager.onBreakStart = { [weak self] in
@@ -54,9 +53,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.blockerWindowController.hideBlocker()
         }
 
-        // Configure warning window callback for skip action
+        // Configure warning window callbacks
         warningWindowController.onSkip = { [weak self] in
             self?.timerManager.skipBreak()
+        }
+
+        // Dismiss just hides the warning (break will still happen)
+        warningWindowController.onDismiss = { [weak self] in
+            self?.warningWindowController.hideWarning()
         }
 
         // Configure hotkey manager callback for override (only works during break)

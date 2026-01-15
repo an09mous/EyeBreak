@@ -1,37 +1,41 @@
 import AppKit
 import SwiftUI
+import Combine
 
 class WarningWindowController {
     // MARK: - Properties
     private var window: NSWindow?
-    private var dismissWorkItem: DispatchWorkItem?
     var onSkip: (() -> Void)?
+    var onDismiss: (() -> Void)?
+
+    // MARK: - Constants
+    private let windowWidth: CGFloat = 380
+    private let windowHeight: CGFloat = 90
 
     // MARK: - Public Methods
-    func showWarning(secondsRemaining: Int) {
-        // Cancel any pending dismiss
-        dismissWorkItem?.cancel()
-        dismissWorkItem = nil
-
+    func showWarning(timerManager: TimerManager) {
         // Hide existing warning first
-        if window != nil {
-            window?.orderOut(nil)
-            window = nil
-        }
+        hideWarning()
+
+        guard let screen = NSScreen.main else { return }
 
         let warningView = WarningView(
-            secondsRemaining: secondsRemaining,
+            timerManager: timerManager,
             onSkip: { [weak self] in
                 self?.hideWarning()
                 self?.onSkip?()
+            },
+            onDismiss: { [weak self] in
+                self?.hideWarning()
+                self?.onDismiss?()
             }
         )
 
         let hostingView = NSHostingView(rootView: warningView)
-        hostingView.frame = NSRect(x: 0, y: 0, width: 320, height: 90)
+        hostingView.frame = NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight)
 
         let newWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 320, height: 90),
+            contentRect: NSRect(x: 0, y: 0, width: windowWidth, height: windowHeight),
             styleMask: [.borderless],
             backing: .buffered,
             defer: false
@@ -40,60 +44,49 @@ class WarningWindowController {
         newWindow.contentView = hostingView
         newWindow.backgroundColor = .clear
         newWindow.isOpaque = false
-        newWindow.level = .floating
+        newWindow.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.floatingWindow)) + 1)
         newWindow.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         newWindow.hasShadow = true
 
-        // Position at top-right of main screen
-        if let screen = NSScreen.main {
-            let screenFrame = screen.visibleFrame
-            let windowFrame = newWindow.frame
-            let x = screenFrame.maxX - windowFrame.width - 20
-            let y = screenFrame.maxY - windowFrame.height - 20
-            newWindow.setFrameOrigin(NSPoint(x: x, y: y))
-        }
+        // Calculate final position (top-right corner)
+        let screenFrame = screen.visibleFrame
+        let finalX = screenFrame.maxX - windowWidth - 20
+        let y = screenFrame.maxY - windowHeight - 20
+
+        // Position window at final location
+        newWindow.setFrameOrigin(NSPoint(x: finalX, y: y))
 
         window = newWindow
         newWindow.orderFrontRegardless()
-
-        // Auto-dismiss after 5 seconds using DispatchWorkItem
-        let workItem = DispatchWorkItem { [weak self] in
-            self?.hideWarning()
-        }
-        dismissWorkItem = workItem
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.0, execute: workItem)
     }
 
     func hideWarning() {
-        dismissWorkItem?.cancel()
-        dismissWorkItem = nil
-
-        if let existingWindow = window {
-            existingWindow.orderOut(nil)
-            window = nil
-        }
+        guard let existingWindow = window else { return }
+        window = nil
+        existingWindow.orderOut(nil)
     }
 }
 
 // MARK: - Warning View
 struct WarningView: View {
-    let secondsRemaining: Int
+    @ObservedObject var timerManager: TimerManager
     let onSkip: () -> Void
+    let onDismiss: () -> Void
 
     var body: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             // Friendly eye icon
             Image(systemName: "eye")
-                .font(.system(size: 28, weight: .light))
+                .font(.system(size: 26, weight: .light))
                 .foregroundColor(.blue)
 
             // Text
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("Break coming up")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.primary)
 
-                Text("Time to rest your eyes in \(secondsRemaining)s")
+                Text("Time to rest your eyes in \(Int(timerManager.timeRemaining))s")
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
             }
@@ -103,15 +96,26 @@ struct WarningView: View {
             // Skip button
             Button(action: onSkip) {
                 Text("Skip")
-                    .font(.system(size: 12))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .font(.system(size: 11))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
             }
             .buttonStyle(.bordered)
             .tint(.secondary)
+
+            // Close button
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+            .frame(width: 20, height: 20)
+            .background(Color.secondary.opacity(0.1))
+            .clipShape(Circle())
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.windowBackgroundColor))
