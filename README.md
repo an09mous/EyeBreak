@@ -6,7 +6,7 @@ A macOS menu bar app that helps you follow the **20-20-20 rule** to prevent digi
 
 - **Menu Bar App** - Lives quietly in your menu bar with an eye icon
 - **20-Minute Timer** - Counts down and shows time until next break
-- **30-Second Warning** - Notification before screen blocks with option to skip
+- **5-Second Warning** - Notification before screen blocks with option to skip
 - **Full-Screen Blocker** - Blocks all displays during break with countdown and inspirational quotes
 - **Multi-Monitor Support** - Primary display shows countdown + quote, secondary displays show black
 - **Override Shortcut** - Press `⌥⇧⎋` (Option+Shift+Escape) to dismiss blocker immediately
@@ -60,7 +60,7 @@ Options:
 1. **Launch** - Click the eye icon in your menu bar to see the dropdown
 2. **Timer** - Shows countdown to next break (e.g., "Next break in 19:45")
 3. **Pause/Resume** - Click to pause reminders; icon changes to crossed-out eye when paused
-4. **Skip Break** - Available in menu during the 30-second warning period before a break
+4. **Skip Break** - Available in menu during the warning period before a break
 5. **During Break** - Screen shows countdown with a random quote; press `⌥⇧⎋` to skip
 6. **Quit** - Select "Quit Eyebreak" from the menu
 
@@ -72,7 +72,7 @@ Edit `Sources/Eyebreak/Resources/config.json` to customize timing:
 {
     "workDurationMinutes": 20,
     "breakDurationSeconds": 20,
-    "warningTimeSeconds": 30
+    "warningTimeSeconds": 5
 }
 ```
 
